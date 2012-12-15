@@ -12,5 +12,7 @@ then
    export ZOOCFGDIR=/etc/zookeeper
    export ZOO_LOG_DIR=/var/log/zookeeper
    export ZOOBINDIR=/usr/bin
+   export ZOOPIDFILE=/var/zookeeper/zookeeper_server.pid
    source ${ZOOKEEPER_HOME}/bin/zkEnv.sh
+
 fi

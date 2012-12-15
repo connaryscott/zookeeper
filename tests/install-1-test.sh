@@ -1,8 +1,8 @@
 #!/usr/bin/env roundup
 #
-# This file contains the test plan for the `build` command.
+# This file contains the test plan for the `install` command.
 #    
-#/ usage:  rerun stubbs:test -m zookeeper -p build [--answers <>]
+#/ usage:  rerun stubbs:test -m zookeeper -p install [--answers <>]
 #
 
 # Helpers
@@ -12,19 +12,18 @@
 # The Plan
 # --------
 
-describe "build"
+describe "install"
 
-it_fails_without_arguments() {
-    rerun zookeeper:build || return 0
-}
 
-it_builds_with_a_specified_version() {
+it_fails_without_a_real_test() {
+
    tmpDir="$(mktemp -d)"
    zooKeeperTmpDir="${tmpDir}/zookeeper"
 
    # see tests/functions.sh
    buildZooKeeper "${zooKeeperTmpDir}" 3.4.5 1
 
+   rerun rpm: upgrade --package-file "${zooKeeperTmpDir}/RPMS/noarch/zookeeper-3.4.5-1.noarch.rpm"
+
    rm -rf "${tmpDir}"
 }
-
