@@ -55,7 +55,7 @@ cp -r $RPM_SOURCE_DIR/%{name}-%{version}/usr/libexec/* %{buildroot}/usr/libexec
 install -d -m 755 %{buildroot}/etc/zookeeper
 (cd %{buildroot}/etc/zookeeper && ln -s ../../usr/share/zookeeper/conf/configuration.xsl)
 (cd %{buildroot}/etc/zookeeper && ln -s ../../usr/share/zookeeper/conf/log4j.properties)
-(cd %{buildroot}/etc/zookeeper && cp ../../usr/share/zookeeper/conf/zoo_sample.cfg zoo.cfg)
+(cd %{buildroot}/etc/zookeeper && cat /usr/share/zookeeper/conf/zoo_sample.cfg |sed 's,^dataDir=.*,dataDir=/var/zookeeper,' > zoo.cfg)
 
 mkdir -p %{buildroot}/etc/rc.d/init.d
 (cd %{buildroot}/etc/rc.d/init.d && cp  ../../../usr/share/zookeeper/src/packages/rpm/init.d/zookeeper .)
