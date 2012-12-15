@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# To implement this command, edit the "Command implementation" section below. 
+
+# Usage
+# -----
+
+# Comments prefixed with `#/` are managed by stubbs.
+# The `command` and `usage` comments describe the command
+# and show its options.
+# 
+#/ command: zookeeper:build: "build and package the zookeeper distribution"
+#/ usage: rerun zookeeper:build [ --url <http://apache.osuosl.org/zookeeper>] [ --package-format <rpm>]  --package-version <> [ --package-release <1>]  --package-directory <> 
+
+# Load common functions
+# ---------------------
+
+# Load the function library for this module.
+# This loads rerun functions, too.
+. $RERUN_MODULE_DIR/lib/functions.sh build || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+# Error handling
+# ---------------
+
+# This script is designed to _fail-fast_.
+
+# Trap errors and exit. The call to `rerun_die` will print the
+# the error message and exit with the error command exit status. 
+
+trap 'rerun_die $? "*** command failed: zookeeper:build. ***"' ERR
+
+# Run [set] `nounset` to treat unset variables as errors. Set [pipefail]
+# so a pipeline return status is the value of the last 
+# (rightmost) command to exit with non-zero status.
+#
+# [set]: http://ss64.com/bash/set.html
+# [pipefail]: http://www.gnu.org/software/bash/manual/html_node/Pipelines.html
+
+set -o nounset -o pipefail
+
+# Command variables
+# -----------------
+
+# This command script can access the following variables
+# declared by `rerun` or by the option parser function.
+
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: URL PACKAGE_FORMAT PACKAGE_VERSION PACKAGE_RELEASE PACKAGE_DIRECTORY
+
+# The `rerun_options_parse` function processes the command line
+# arguments. Each accepted command line flag results in setting 
+# one the corresponding option variables.
+
+rerun_options_parse "$@"
+
+
+# Command implementation
+# ----------------------
+
+
+#Available commands in module, "/home/chuck/workspace/rerun-modules/apache-maven":
+#build: "build and package the apache-maven distribution"
+#    --url|-u <http://apache.mirrors.lucidnetworks.net/maven/maven-3>: "url to the apache-maven downloads"
+#    --release|-r <1>: "package release"
+#    --version|-v <>: "package version"
+#    --directory|-d <>: "reference installation directory to package"
+
+#${URL}/zookeeper-${VERSION}.tar.gz
+#http://apache.osuosl.org/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz
+
+#URL=[http://apache.osuosl.org/zookeeper]
+#package-format=[rpm]
+#package-version=<3.4.5>
+#package-release=[1]
+#package-directory=</tmp/zookeeperBuild>
+
+buildrpm() {
+  if [[ ! -e $PACKAGE_DIRECTORY/SOURCES/zookeeper-${PACKAGE_VERSION}.tar.gz ]]
+  then
+    # Download the specified version from the downloads site:
+
+    mkdir -p $PACKAGE_DIRECTORY/SOURCES
+
+    #
+    # wget, who needs it?
+    #
+    if [ ! -r $PACKAGE_DIRECTORY/SOURCES/zookeeper-${PACKAGE_VERSION}.tar.gz ]
+    then
+       curl -s -k -f -o $PACKAGE_DIRECTORY/SOURCES/zookeeper-${PACKAGE_VERSION}.tar.gz  ${URL}/zookeeper-${PACKAGE_VERSION}/zookeeper-${PACKAGE_VERSION}.tar.gz || rerun_die "Unable to download artifact: ${URL}/zookeeper-${PACKAGE_VERSION}.tar.gz"
+    fi
+  fi
+
+   rerun rpm:build -n zookeeper -v $PACKAGE_VERSION -r $PACKAGE_RELEASE -t $PACKAGE_DIRECTORY
+}
+
+case $PACKAGE_FORMAT in
+  rpm)
+    buildrpm
+    ;;
+  *)
+    rerun_die "invalid package format \"$PACKAGE_FORMAT\""
+    ;;
+esac
+
+
+
+exit $?
+
