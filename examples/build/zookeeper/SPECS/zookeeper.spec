@@ -1,4 +1,4 @@
-Summary: ZooKeeper Build and Comprehension Tool
+Summary: ZooKeeper 
 
 # The package name, version and release are supplied by rpm:build using rpmbuild(8)'s "--define" option:
 Name: %{name}
@@ -31,8 +31,6 @@ ZooKeeper
 %prep
 
 %setup
-# Overlay the source package contents with the customized files and directories:
-#cp -R $RPM_SOURCE_DIR/%{name}-%{version}/* $RPM_BUILD_DIR/%{name}-%{version}
 
 %build
  
@@ -45,14 +43,21 @@ mv %{buildroot}/usr/share/zookeeper/lib/*.jar %{buildroot}/usr/share/zookeeper
 
 mkdir -p %{buildroot}/usr/bin
 (cd %{buildroot}/usr/bin && ln -s ../share/zookeeper/bin/zkServer.sh)
-(cd %{buildroot}/usr/bin && ln -s ../share/zookeeper/bin/zkEnv.sh)
 (cd %{buildroot}/usr/bin && ln -s ../share/zookeeper/bin/zkCli.sh)
 (cd %{buildroot}/usr/bin && ln -s ../share/zookeeper/bin/zkCleanup.sh)
+
+#
+# copy in libexec environment to ensure sufficient support for service management
+#
+mkdir -p %{buildroot}/usr/libexec
+cp -r $RPM_SOURCE_DIR/%{name}-%{version}/usr/libexec/* %{buildroot}/usr/libexec
 
 install -d -m 755 %{buildroot}/etc/zookeeper
 (cd %{buildroot}/etc/zookeeper && ln -s ../../usr/share/zookeeper/conf/configuration.xsl)
 (cd %{buildroot}/etc/zookeeper && ln -s ../../usr/share/zookeeper/conf/log4j.properties)
-#(cd %{buildroot}/etc/zookeeper && ln -s ../../usr/share/zookeeper/conf/zoo.cfg)
+
+mkdir -p %{buildroot}/etc/rc.d/init.d
+(cd %{buildroot}/etc/rc.d/init.d && cp  ../../../usr/share/zookeeper/src/packages/rpm/init.d/zookeeper .)
 
 install -d -m 750 %{buildroot}/var/zookeeper
 install -d -m 750 %{buildroot}/var/log/zookeeper
@@ -63,16 +68,21 @@ install -d -m 750 %{buildroot}/var/log/zookeeper
 %files
 %defattr(-,zookeeper,zookeeper)
 %attr(755,root,root) /usr/bin/zkServer.sh
-%attr(755,root,root) /usr/bin/zkEnv.sh
 %attr(755,root,root) /usr/bin/zkCli.sh
 %attr(755,root,root) /usr/bin/zkCleanup.sh
-%attr(644,zookeeper,zookeeper) /etc/zookeeper/configuration.xsl
-%attr(644,zookeeper,zookeeper) /etc/zookeeper/log4j.properties
+
+%attr(755,root,root) /usr/libexec/*
+
+%dir %attr(-,zookeeper,zookeeper) /etc/zookeeper
+%attr(-,zookeeper,zookeeper) /etc/zookeeper/*
+#%attr(644,zookeeper,zookeeper) /etc/zookeeper/configuration.xsl
+#%attr(644,zookeeper,zookeeper) /etc/zookeeper/log4j.properties
+
+%attr(755,root,root) /etc/rc.d/init.d/zookeeper
 
 %dir %attr(-,zookeeper,zookeeper) /usr/share/zookeeper
 %attr(-,zookeeper,zookeeper) /usr/share/zookeeper/*
-%dir %attr(-,zookeeper,zookeeper) /etc/zookeeper
-%attr(-,zookeeper,zookeeper) /etc/zookeeper/*
+
 
 %dir %attr(750,zookeeper,zookeeper) /var/zookeeper
 %dir %attr(750,zookeeper,zookeeper) /var/log/zookeeper
@@ -87,10 +97,14 @@ then
   :
 else
   groupadd -f zookeeper
-  useradd -rd /usr/share/zookeeper -g zookeeper zookeeper
+  useradd -rd /usr/share/zookeeper -s /bin/bash -g zookeeper zookeeper
   passwd -l zookeeper
 fi
 
 %post
+# setup zookeeper as a system service:
+/sbin/chkconfig --add zookeeper
+/sbin/chkconfig --level 345 zookeeper on
 
 %preun
+/sbin/service zookeeper stop
