@@ -15,7 +15,7 @@
 describe "install"
 
 
-it_fails_without_a_real_test() {
+it_runs_with_specific_version() {
 
    tmpDir="$(mktemp -d)"
    zooKeeperTmpDir="${tmpDir}/zookeeper"
